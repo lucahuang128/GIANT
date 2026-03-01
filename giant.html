@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>直銷精算助手</title>
+    <style>
+        :root { --red: #D32F2F; --dark-red: #B71C1C; --gold: #FFD700; --white: #FFFFFF; --bg: #fdfdfd; }
+        * { box-sizing: border-box; font-family: -apple-system, "Noto Sans TC", sans-serif; }
+        body { margin: 0; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
+
+        /* 側邊選單 */
+        .sidebar { 
+            width: 260px; background: var(--red); color: white; 
+            height: 100%; position: absolute; left: -260px; transition: 0.3s; z-index: 1000;
+            overflow-y: auto; box-shadow: 2px 0 15px rgba(0,0,0,0.3);
+        }
+        .sidebar.active { left: 0; }
+        .sidebar-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); font-weight: bold; }
+        
+        .menu-cat { border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .menu-btn { 
+            width: 100%; padding: 18px 20px; background: var(--red); border: none; color: white;
+            text-align: left; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between;
+        }
+        .menu-sub { background: var(--dark-red); display: none; }
+        .menu-sub div { padding: 12px 35px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+        .menu-sub div:hover { background: #8E0000; }
+
+        /* 主區塊 */
+        .main { flex: 1; display: flex; flex-direction: column; width: 100%; }
+        .navbar { background: var(--red); color: white; padding: 15px; display: flex; align-items: center; gap: 15px; }
+        .burger { font-size: 28px; cursor: pointer; background: none; border: none; color: white; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; }
+        .overlay.active { display: block; }
+
+        /* 表單 */
+        .container { padding: 15px; overflow-y: auto; flex: 1; }
+        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-top: 6px solid var(--red); }
+        label { display: block; margin-bottom: 6px; font-size: 14px; color: #555; font-weight: bold; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .btn-calc { background: var(--red); color: white; border: none; width: 100%; padding: 16px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 10px; }
+        .btn-undo { background: #f1f1f1; color: #666; border: 1px solid #ddd; width: 100%; padding: 10px; border-radius: 8px; margin-top: 10px; }
+
+        /* 結果 */
+        .res-panel { margin-top: 25px; padding: 20px; background: #FFF9F9; border-radius: 12px; border: 1px solid #FFEBEE; text-align: center; }
+        .res-usd { font-size: 30px; color: var(--red); font-weight: 900; }
+        .res-twd { font-size: 18px; color: #555; margin-top: 5px; font-weight: bold; border-top: 1px solid #eee; padding-top: 10px; }
+        .res-note { font-size: 12px; color: #999; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">分紅精算系統</div>
+        
+        <div class="menu-cat">
+            <button class="menu-btn" onclick="toggleSub('sub1')">💰 首購業績 <span>▼</span></button>
+            <div class="menu-sub" id="sub1" style="display:block;"> <div onclick="openFunc('首購-消費分紅')">消費分紅</div>
+                <div onclick="openFunc('首購-代理分紅')">代理分紅</div>
+                <div onclick="openFunc('首購-推薦獎金')">推薦獎金</div>
+                <div onclick="openFunc('首購-對碰獎金')">對碰獎金</div>
+                <div onclick="openFunc('首購-對等獎金')">對等獎金</div>
+                <div onclick="openFunc('首購-領袖分紅')">領袖分紅</div>
+            </div>
+        </div>
+
+        <div class="menu-cat">
+            <button class="menu-btn" onclick="toggleSub('sub2')">♻️ 重消業績 <span>▼</span></button>
+            <div class="menu-sub" id="sub2">
+                <div onclick="openFunc('重消-消費分紅')">消費分紅</div>
+                <div onclick="openFunc('重消-忠誠獎金')">忠誠獎金</div>
+                <div onclick="openFunc('重消-輔導獎金')">輔導獎金</div>
+            </div>
+        </div>
+
+        <div class="menu-cat">
+            <button class="menu-btn" onclick="toggleSub('sub3')">🏆 領袖獎勵 <span>▼</span></button>
+            <div class="menu-sub" id="sub3">
+                <div onclick="openFunc('領袖-業務總監')">業務總監</div>
+                <div onclick="openFunc('領袖-營業處')">營業處</div>
+                <div onclick="openFunc('領袖-領袖分紅')">領袖分紅</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="navbar">
+            <button class="burger" onclick="toggleSidebar()">☰</button>
+            <b id="navTitle">首購-消費分紅</b>
+        </div>
+        <div class="container">
+            <div class="card" id="mainCard">
+                <h3 id="modeTitle" style="color:var(--red); margin:0 0 15px 0;">首購-消費分紅</h3>
+                <div id="fields"></div>
+                <button class="btn-calc" onclick="calculate()">執行計算 🚀</button>
+                <button class="btn-undo" onclick="undo()">⬅️ 回上一步</button>
+                <div id="resultArea"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let activeMode = "首購-消費分紅";
+    let history = [];
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('active');
+        document.getElementById('overlay').classList.toggle('active');
+    }
+
+    function toggleSub(id) {
+        const target = document.getElementById(id);
+        target.style.display = (target.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function openFunc(mode) {
+        activeMode = mode;
+        document.getElementById('navTitle').innerText = mode;
+        document.getElementById('modeTitle').innerText = mode;
+        renderFields(mode);
+        toggleSidebar();
+    }
+
+    function renderFields(mode) {
+        const area = document.getElementById('fields');
+        let html = "";
+        
+        // 依照功能產生輸入欄位
+        if (mode === '首購-消費分紅') {
+            html = `<label>會員級別</label><select id="lv"><option value="10">銀級(10)</option><option value="15">金級(15)</option><option value="20">鑽級(20)</option></select>
+                    <label>體系總人數</label><input type="number" id="p" value="20">`;
+        } else if (mode === '首購-代理分紅') {
+            html = `<label>總營業額 (TWD)</label><input type="number" id="s" value="1000000">
+                    <label>分紅人數</label><input type="number" id="n" value="10">`;
+        } else if (mode === '首購-推薦獎金') {
+            html = `<label>級別</label><select id="r"><option value="200">銀級 (200 USD)</option><option value="1000">金級 (1000 USD)</option><option value="2000">鑽級 (2000 USD)</option></select>`;
+        } else if (mode === '首購-對碰獎金') {
+            html = `<label>小區 PV</label><input type="number" id="pv" value="3000">
+                    <label>級別</label><select id="rl"><option value="600">銀級 (限600)</option><option value="1500">金級 (限1500)</option><option value="5000">鑽級 (限5000)</option></select>`;
+        } else if (mode === '首購-對等獎金') {
+            html = `<label>輸入代數</label><input type="number" id="gen" value="3">
+                    <label>級別</label><select id="rl"><option value="4">銀級 (限4)</option><option value="5">金級 (限5)</option><option value="6">鑽級 (限6)</option></select>
+                    <label>單代獎金基數 (USD)</label><input type="number" id="base" value="1000">`;
+        } else if (mode === '首購-領袖分紅' || mode === '領袖-領袖分紅') {
+            html = `<label>領袖階級</label><select id="star"><option value="0.001">一星 (0.1%)</option><option value="0.002">二星 (0.2%)</option><option value="0.003">三星 (0.3%)</option><option value="0.004">四星 (0.4%)</option><option value="0.005">五星 (0.5%)</option><option value="0.01">皇冠 (1%)</option></select>
+                    <label>全球分紅總金額 (USD)</label><input type="number" id="global" value="1000000">`;
+        } else if (mode === '重消-消費分紅') {
+            html = `<label>會員級別</label><select id="lv"><option value="10">銀級(10層)</option><option value="15">金級(15層)</option><option value="20">鑽級(20層)</option></select>
+                    <label>重消人數</label><input type="number" id="p" value="10000">
+                    <label>重消 PV 值</label><input type="number" id="pv" value="300000">`;
+        } else if (mode === '重消-忠誠獎金') {
+            html = `<label>總重消值 (TWD)</label><input type="number" id="v" value="100000">
+                    <label>是否為鑽級</label><select id="isD"><option value="1">是</option><option value="0">否</option></select>
+                    <label>是否重消滿一年</label><select id="isY"><option value="1">是</option><option value="0">否</option></select>`;
+        } else if (mode === '重消-輔導獎金') {
+            html = `<label>會員級別</label><select id="lv"><option value="3">銀級(限3代)</option><option value="6">金級(限6代)</option><option value="9">鑽級(限9代)</option></select>
+                    <label>輸入代數 (1人=1代)</label><input type="number" id="gen" value="5">
+                    <label>每代平均基數 (USD)</label><input type="number" id="base" value="1000">`;
+        } else if (mode === '領袖-營業處') {
+            html = `<label>總業績 (TWD)</label><input type="number" id="s" value="100000">`;
+        } else if (mode === '領袖-業務總監') {
+            html = `<label>業務數據</label><input type="number" id="v" value="100000">`;
+        }
+
+        area.innerHTML = html;
+        document.getElementById('resultArea').innerHTML = "";
+    }
+
+    function calculate() {
+        let usd = 0, twd = 0, note = "";
+
+        if (activeMode === '首購-消費分紅') {
+            const p = parseInt(document.getElementById('p').value);
+            usd = Math.floor(p / 2) * 5.5;
+        } else if (activeMode === '首購-代理分紅') {
+            const s = parseFloat(document.getElementById('s').value);
+            const n = parseInt(document.getElementById('n').value);
+            twd = (s * 0.055) / n;
+        } else if (activeMode === '首購-推薦獎金') {
+            usd = parseFloat(document.getElementById('r').value) * 0.15;
+        } else if (activeMode === '首購-對碰獎金') {
+            const pv = parseFloat(document.getElementById('pv').value);
+            const cap = parseFloat(document.getElementById('rl').value);
+            usd = Math.min(pv * 0.12, cap);
+        } else if (activeMode === '首購-對等獎金') {
+            const gen = parseInt(document.getElementById('gen').value);
+            const limit = parseInt(document.getElementById('rl').value);
+            const b = parseFloat(document.getElementById('base').value);
+            for(let i=1; i<=Math.min(gen, limit); i++) usd += (i<=1?b*0.1:b*0.05);
+        } else if (activeMode.includes('領袖分紅')) {
+            const rate = parseFloat(document.getElementById('star').value);
+            const g = parseFloat(document.getElementById('global').value);
+            usd = g * rate;
+        } else if (activeMode === '重消-消費分紅') {
+            const pv = parseFloat(document.getElementById('pv').value);
+            usd = pv * 0.01;
+            note = "層數依人數換算";
+        } else if (activeMode === '重消-忠誠獎金') {
+            if(document.getElementById('isD').value == "1" && document.getElementById('isY').value == "1") {
+                twd = parseFloat(document.getElementById('v').value) * 0.055;
+            } else { note = "條件不符 (需鑽級且滿一年)"; }
+        } else if (activeMode === '重消-輔導獎金') {
+            const gen = parseInt(document.getElementById('gen').value);
+            const limit = parseInt(document.getElementById('lv').value);
+            const b = parseFloat(document.getElementById('base').value);
+            const activeG = Math.min(gen, limit);
+            for(let i=1; i<=activeG; i++) {
+                if(i<=3) usd += b*0.03; else if(i<=6) usd += b*0.04; else usd += b*0.05;
+            }
+        } else if (activeMode === '領袖-營業處') {
+            const s = parseFloat(document.getElementById('s').value);
+            const baseBonus = s * 0.1;
+            twd = (baseBonus * 0.5) / 9;
+        }
+
+        if (twd === 0) twd = usd * 30;
+        if (usd === 0) usd = twd / 30;
+
+        const html = `
+            <div class="res-panel">
+                <div class="res-usd">$ ${usd.toLocaleString(undefined, {minimumFractionDigits:1})} <small>USD</small></div>
+                <div class="res-twd">NT$ ${Math.floor(twd).toLocaleString()}</div>
+                <div class="res-note">${note}</div>
+            </div>`;
+        document.getElementById('resultArea').innerHTML = html;
+        history.push({mode: activeMode, usd: usd});
+    }
+
+    function undo() { history.pop(); document.getElementById('resultArea').innerHTML = ""; }
+
+    // 初始化載入
+    window.onload = () => renderFields("首購-消費分紅");
+</script>
+</body>
+</html>
