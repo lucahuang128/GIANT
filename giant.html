@@ -180,7 +180,7 @@
             const n = parseInt(document.getElementById('n').value);
             twd = (s * 0.055) / n;
         } else if (activeMode === '首購-推薦獎金') {
-            usd = parseFloat(document.getElementById('r').value) * 0.15;
+            usd = parseFloat(document.getElementById('r').value) * 0.15 * 0.55;
         } else if (activeMode === '首購-對碰獎金') {
             const pv = parseFloat(document.getElementById('pv').value);
             const cap = parseFloat(document.getElementById('rl').value);
